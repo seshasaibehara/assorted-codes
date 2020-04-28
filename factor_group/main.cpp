@@ -19,7 +19,7 @@ Vector3d fract2cart(Vector3d fract_coords, Matrix3d lattice){
 }
 
 bool _is_coordinate_inside_crystal(double coordinate){
-    if (coordinate<0 || coordinate>=1){
+    if (coordinate<-PREC || coordinate>=1-PREC){
         return false;
     }
     return true;
@@ -29,7 +29,7 @@ void move_the_atom_inside_the_crystal(Vector3d* fract_coords_ptr, Matrix3d latti
     auto& fract_coords = *fract_coords_ptr;
     for (int i=0; i<3; ++i){
         if (_is_coordinate_inside_crystal(fract_coords(i))==false){
-            fract_coords(i) = fract_coords(i)-floor(fract_coords(i));        
+            fract_coords(i) = fract_coords(i)-floor(fract_coords(i)+PREC);        
         }
     }
     return;
@@ -292,7 +292,7 @@ bool is_structure_equivalent(const std::vector<basis_class>& shifted_basis, cons
 std::vector<basis_class> generate_shifted_basis(const std::vector<basis_class>& new_basis, Vector3d possible_translation, Matrix3d lattice){
     std::vector<basis_class> shifted_basis;
     basis_class temp_basis;
-
+//    std::cout << possible_translation << std::endl;
     for (auto &x: new_basis){
         temp_basis.atom_type = x.atom_type;
         temp_basis.coordinates = x.coordinates + possible_translation;//        
@@ -324,10 +324,10 @@ std::vector<Vector3d> generate_translations(const std::vector<basis_class>& new_
     }
     for (auto &possible_translation: possible_translations){
         
-//        std::cout << possible_translation << std::endl;
+        std::cout << possible_translation << std::endl;
         shifted_basis = generate_shifted_basis(new_basis, fract2cart(possible_translation,lattice), lattice);
-//        std::cout << is_structure_equivalent(shifted_basis,old_basis) << std::endl;
-//        std::cout << "----" << std::endl;
+        std::cout << is_structure_equivalent(shifted_basis,old_basis) << std::endl;
+        std::cout << "----" << std::endl;
         if (is_structure_equivalent(shifted_basis, old_basis)==true){
             translations.push_back(possible_translation);
         }
@@ -353,9 +353,10 @@ std::vector<sym_op_class> calc_factor_group(const std::vector<sym_op_class>& poi
             new_basis.push_back(temp_basis);  
          }
 
-//        std::cout << symmetry_operation.coord_matrix << std::endl; 
+        std::cout << symmetry_operation.coord_matrix << std::endl; 
+        std::cout << symmetry_operation.label << std::endl;
         translations = generate_translations(new_basis,crystal_data.basis,crystal_data.lattice);
-//        std::cout << "====" << std::endl;
+        std::cout << "====" << std::endl;
         for (auto &translation: translations){
             temp_sym_op.coord_matrix = symmetry_operation.coord_matrix;
             temp_sym_op.translation = translation;
@@ -410,7 +411,7 @@ int main(int argc, char* argv[]){
     crystal crystal_data = read_input_data(argv[1]);
     std::vector<sym_op_class> point_group = calc_point_group_of_lattice(crystal_data);
     std::vector<sym_op_class> factor_group = calc_factor_group(point_group, crystal_data);
-    print_point_group(point_group);
+//    print_point_group(point_group);
     print_factor_group(factor_group);
 
     return 0;
